@@ -20,7 +20,29 @@ def DownloadFileWithProcessBar(url: str, output_path: str):
                              unit_scale=True,
                              miniters=1,
                              desc=url.split('/')[-1]) as t:
-        urlretrieve(url, filename=output_path, reporthook=t.update_to)
+        import ssl
+        from urllib.request import urlopen
+        from urllib.request import Request
+        
+        # 创建 SSL 上下文
+        context = ssl._create_unverified_context()
+        
+        # 打开URL并下载
+        req = Request(url)
+        with urlopen(req, context=context) as response:
+            total_size = int(response.headers.get('content-length', 0))
+            block_size = 1024
+            t.total = total_size
+            
+            with open(output_path, 'wb') as f:
+                while True:
+                    block = response.read(block_size)
+                    if not block:
+                        break
+                    f.write(block)
+                    t.update(len(block))
+        t.close()
+        # urlretrieve(url, filename=output_path, reporthook=t.update_to)
 
 
 def PrintGreen(msg, colored_msg):
